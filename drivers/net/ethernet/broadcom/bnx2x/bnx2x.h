@@ -19,6 +19,9 @@
 #include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/pci_regs.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/net_tstamp.h>
+#include <linux/timecounter.h>
 
 /* compilation time flags */
 
