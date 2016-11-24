@@ -1339,10 +1339,50 @@ static int set_primary_buffer(disp_session_input_config *input)
 
 }
 
-int _ioctl_set_input_buffer(unsigned long arg)
+int _do_set_input_buffer(disp_session_input_config *session_input)
 {
 	int ret = 0;
 	unsigned int dst_mva = 0;
+	unsigned int session_id = 0;
+
+	session_id = session_input->session_id;
+
+	disp_session_sync_info *session_info = disp_get_session_sync_info_for_debug(session_id);
+	if(session_info)
+	{
+		dprec_start(&session_info->event_setinput, 0, session_input->config_layer_num);
+	}
+
+	DISPPR_FENCE("S+/%s%d/count%d\n", disp_session_mode_spy(session_id), DISP_SESSION_DEV(session_id), session_input->config_layer_num);
+
+	if(DISP_SESSION_TYPE(session_id) == DISP_SESSION_PRIMARY)
+	{
+		ret = set_primary_buffer(session_input);
+	}
+	else if(DISP_SESSION_TYPE(session_id) == DISP_SESSION_EXTERNAL)
+	{
+		ret = set_external_buffer(session_input);
+	}
+	else if(DISP_SESSION_TYPE(session_id) == DISP_SESSION_MEMORY)
+	{
+		ret = set_memory_buffer(session_input);
+	}
+	else
+	{
+		DISPERR("session type is wrong:0x%08x\n", session_id);
+		return -1;
+	}
+	if(session_info)
+	{
+		dprec_done(&session_info->event_setinput, 0, session_input->config_layer_num);
+	}
+
+	return ret;
+}
+
+int _ioctl_set_input_buffer(unsigned long arg)
+{
+	int ret = 0;
 	void __user *argp = (void __user *)arg;
 	unsigned int session_id = 0;
 	disp_session_input_config session_input;
@@ -1353,39 +1393,7 @@ int _ioctl_set_input_buffer(unsigned long arg)
 		return -EFAULT;
 	}
 
-	session_id = session_input.session_id;
-
-	disp_session_sync_info *session_info = disp_get_session_sync_info_for_debug(session_id);
-	if(session_info)
-	{
-		dprec_start(&session_info->event_setinput, 0, session_input.config_layer_num);
-	}
-
-	DISPPR_FENCE("S+/%s%d/count%d\n", disp_session_mode_spy(session_id), DISP_SESSION_DEV(session_id), session_input.config_layer_num);
-
-	if(DISP_SESSION_TYPE(session_id) == DISP_SESSION_PRIMARY)
-	{
-		ret = set_primary_buffer(&session_input);
-	}
-	else if(DISP_SESSION_TYPE(session_id) == DISP_SESSION_EXTERNAL)
-	{
-		ret = set_external_buffer(&session_input);
-	}
-	else if(DISP_SESSION_TYPE(session_id) == DISP_SESSION_MEMORY)
-	{
-		ret = set_memory_buffer(&session_input);
-	}
-	else
-	{
-		DISPERR("session type is wrong:0x%08x\n", session_id);
-		return -1;
-	}
-	if(session_info)
-	{
-		dprec_done(&session_info->event_setinput, 0, session_input.config_layer_num);
-	}
-
-	return ret;
+	return _do_set_input_buffer(&session_input);
 }
 
 static int _sync_convert_fb_layer_to_disp_output(unsigned int session_id, disp_output_config* src, disp_mem_output_config *dst, unsigned int dst_mva)
@@ -1786,6 +1794,26 @@ int _ioctl_get_display_caps(unsigned long arg)
 	return (ret);
 }
 
+int _do_wait_vsync(disp_session_vsync_config *vsync_config)
+{
+	int ret = 0;
+
+	disp_session_sync_info *session_info = disp_get_session_sync_info_for_debug(vsync_config->session_id);
+	if(session_info)
+	{
+		dprec_start(&session_info->event_waitvsync, 0, 0);
+	}
+
+	ret = primary_display_wait_for_vsync(vsync_config);
+
+	if(session_info)
+	{
+		dprec_done(&session_info->event_waitvsync, 0, 0);
+	}
+
+	return (ret);
+}
+
 int _ioctl_wait_vsync(unsigned long arg)
 {
 	int ret = 0;
@@ -1799,20 +1827,7 @@ int _ioctl_wait_vsync(unsigned long arg)
 		return -EFAULT;
 	}
 
-	disp_session_sync_info *session_info = disp_get_session_sync_info_for_debug(vsync_config.session_id);
-	if(session_info)
-	{
-		dprec_start(&session_info->event_waitvsync, 0, 0);
-	}
-
-	ret = primary_display_wait_for_vsync(&vsync_config);
-
-	if(session_info)
-	{
-		dprec_done(&session_info->event_waitvsync, 0, 0);
-	}
-
-	return (ret);
+	return _do_wait_vsync(&vsync_config);
 }
 
 int _ioctl_set_vsync(unsigned long arg)
@@ -2056,13 +2071,98 @@ static long mtk_disp_mgr_compat_ioctl(struct file *file, unsigned int cmd,  unsi
 {
 	long ret = -ENOIOCTLCMD;
 
+	void __user *argp = (void __user *)arg;
+
 	switch(cmd) {
 
-    // add cases here for 32bit/64bit conversion
-    // ...
+	case DISP_IOCTL_WAIT_FOR_VSYNC_32:
+	{
+		int err;
+		disp_session_vsync_config vc;
+		compat_disp_session_vsync_config __user *cvc;
+
+		cvc = compat_ptr(arg);
+
+		err = __get_user(vc.session_id, &cvc->session_id);
+		err |= __get_user(vc.vsync_cnt, &cvc->vsync_cnt);
+		err |= __get_user(vc.vsync_ts, &cvc->vsync_ts);
+
+		if (err)
+			return -EFAULT;
+
+		return _do_wait_vsync(&vc);
+	}
+
+	case DISP_IOCTL_SET_INPUT_BUFFER_32:
+	{
+		int err, n;
+		disp_session_input_config *si;
+		compat_disp_session_input_config __user *csi;
+
+		si = kmalloc(sizeof(disp_session_input_config), GFP_KERNEL);
+		if (!si)
+			return -EFAULT;
+		csi = compat_ptr(arg);
+
+		err = __get_user(si->setter, &csi->setter);
+		err |= __get_user(si->session_id, &csi->session_id);
+		err |= __get_user(si->config_layer_num, &csi->config_layer_num);
+
+		for (n = 0; n < MAX_INPUT_CONFIG; n++) {
+			err |= __get_user(si->config[n].layer_id, &csi->config[n].layer_id);
+			err |= __get_user(si->config[n].layer_enable, &csi->config[n].layer_enable);
+			err |= __get_user(si->config[n].buffer_source, &csi->config[n].buffer_source);
+
+			compat_uptr_t src_base_addr;
+			err |= __get_user(src_base_addr, &csi->config[n].src_base_addr);
+			si->config[n].src_base_addr = compat_ptr(src_base_addr);
+
+			compat_uptr_t src_phy_addr;
+			err |= __get_user(src_phy_addr, &csi->config[n].src_phy_addr);
+			si->config[n].src_phy_addr = compat_ptr(src_phy_addr);
+
+			err |= __get_user(si->config[n].src_direct_link, &csi->config[n].src_direct_link);
+			err |= __get_user(si->config[n].src_fmt, &csi->config[n].src_fmt);
+
+			err |= __get_user(si->config[n].src_use_color_key, &csi->config[n].src_use_color_key);
+
+			err |= __get_user(si->config[n].src_color_key, &csi->config[n].src_color_key);
+			err |= __get_user(si->config[n].src_pitch, &csi->config[n].src_pitch);
+			err |= __get_user(si->config[n].src_offset_x, &csi->config[n].src_offset_x);
+			err |= __get_user(si->config[n].src_offset_y, &csi->config[n].src_offset_y);
+			err |= __get_user(si->config[n].src_width, &csi->config[n].src_width);
+			err |= __get_user(si->config[n].src_height, &csi->config[n].src_height);
+
+			err |= __get_user(si->config[n].tgt_offset_x, &csi->config[n].tgt_offset_x);
+			err |= __get_user(si->config[n].tgt_offset_y, &csi->config[n].tgt_offset_y);
+			err |= __get_user(si->config[n].tgt_width, &csi->config[n].tgt_width);
+			err |= __get_user(si->config[n].tgt_height, &csi->config[n].tgt_height);
+			err |= __get_user(si->config[n].layer_rotation, &csi->config[n].layer_rotation);
+			err |= __get_user(si->config[n].layer_type, &csi->config[n].layer_type);
+			err |= __get_user(si->config[n].video_rotation, &csi->config[n].video_rotation);
+
+			err |= __get_user(si->config[n].isTdshp, &csi->config[n].isTdshp);
+			err |= __get_user(si->config[n].next_buff_idx, &csi->config[n].next_buff_idx);
+			err |= __get_user(si->config[n].identity, &csi->config[n].identity);
+			err |= __get_user(si->config[n].connected_type, &csi->config[n].connected_type);
+			err |= __get_user(si->config[n].security, &csi->config[n].security);
+			err |= __get_user(si->config[n].alpha_enable, &csi->config[n].alpha_enable);
+			err |= __get_user(si->config[n].alpha, &csi->config[n].alpha);
+			err |= __get_user(si->config[n].sur_aen, &csi->config[n].sur_aen);
+			err |= __get_user(si->config[n].src_alpha, &csi->config[n].src_alpha);
+			err |= __get_user(si->config[n].dst_alpha, &csi->config[n].dst_alpha);
+			err |= __get_user(si->config[n].frm_sequence, &csi->config[n].frm_sequence);
+			err |= __get_user(si->config[n].yuv_range, &csi->config[n].yuv_range);
+		}
+
+		if (err)
+			return -EFAULT;
+
+		return _do_set_input_buffer(si);
+	}
 
 	default:
-		return mtk_disp_mgr_ioctl(file,  cmd,  arg);
+		return mtk_disp_mgr_ioctl(file, cmd, arg);
 	}
 
 	return ret;
