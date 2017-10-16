@@ -21,6 +21,7 @@
 #ifndef _UAPI_LINUX_BINDER_H
 #define _UAPI_LINUX_BINDER_H
 
+#include <linux/types.h>
 #include <linux/ioctl.h>
 
 #define B_PACK_CHARS(c1, c2, c3, c4) \
@@ -113,6 +114,7 @@ struct binder_object_header {
  * between processes.
  */
 struct flat_binder_object {
+	/* 8 bytes for large_flat_header. */
 	struct binder_object_header	hdr;
 	__u32				flags;
 
