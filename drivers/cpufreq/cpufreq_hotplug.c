@@ -393,7 +393,8 @@ void hp_based_cpu_num(int num)
 		dbs_info = &per_cpu(hp_cpu_dbs_info, 0);	/* TODO: FIXME, cpu = 0 */
 		policy = dbs_info->cdbs.cur_policy;
 
-		dbs_freq_increase(policy, policy->max);
+		if (policy->cur < 1183000)
+			dbs_freq_increase(policy, 1183000);
 		g_trigger_hp_work = CPU_HOTPLUG_WORK_TYPE_BASE;
 		/* schedule_delayed_work_on(0, &hp_work, 0); */
 		if (hp_wq == NULL)
