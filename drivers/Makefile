@@ -45,6 +45,7 @@ obj-$(CONFIG_RESET_CONTROLLER)	+= reset/
 obj-y				+= tty/
 obj-y				+= char/
 obj-$(CONFIG_STAGING)		+= staging/
+obj-$(CONFIG_ANDROID)		+= android/
 # gpu/ comes after char for AGP vs DRM startup
 obj-y				+= gpu/
 

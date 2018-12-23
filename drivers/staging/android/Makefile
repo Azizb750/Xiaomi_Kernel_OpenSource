@@ -8,8 +8,6 @@ KBUILD_CFLAGS += -DMTK_INTERNAL_BUILD  # add for LMK
 endif
 ccflags-y += -I$(srctree)/drivers/staging/android/ion
 
-obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder.o binder_alloc.o
-obj-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
 obj-$(CONFIG_ASHMEM)			+= ashmem.o
 obj-$(CONFIG_ANDROID_LOGGER)		+= logger.o
 obj-$(CONFIG_ANDROID_TIMED_OUTPUT)	+= timed_output.o
