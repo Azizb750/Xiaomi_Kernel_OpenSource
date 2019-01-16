@@ -200,9 +200,8 @@ static inline bool unconditional(const struct ip6t_entry *e)
 	static const struct ip6t_ip6 uncond;
 
 	return e->target_offset == sizeof(struct ip6t_entry) &&
-		memcmp(&e->ipv6, &uncond, sizeof(uncond)) == 0;
+	       memcmp(&e->ipv6, &uncond, sizeof(uncond)) == 0;
 }
-
 
 static inline const struct xt_entry_target *
 ip6t_get_target_c(const struct ip6t_entry *e)
@@ -350,6 +349,11 @@ ip6t_do_table(struct sk_buff *skb,
 	local_bh_disable();
 	addend = xt_write_recseq_begin();
 	private = table->private;
+	   /*
+	 * Ensure we load private-> members after we've fetched the base
+   * pointer.
+	 */
+	smp_read_barrier_depends();
 	cpu        = smp_processor_id();
 	table_base = private->entries[cpu];
 	jumpstack  = (struct ip6t_entry **)private->jumpstack[cpu];
@@ -573,29 +577,6 @@ static void cleanup_match(struct xt_entry_match *m, struct net *net)
 	module_put(par.match->me);
 }
 
-<<<<<<< HEAD
-static int
-check_entry(const struct ip6t_entry *e)
-{
-	const struct xt_entry_target *t;
-
-	if (!ip6_checkentry(&e->ipv6))
-		return -EINVAL;
-
-	if (e->target_offset + sizeof(struct xt_entry_target) >
-	    e->next_offset)
-		return -EINVAL;
-
-	t = ip6t_get_target_c(e);
-	if (e->target_offset + t->u.target_size > e->next_offset)
-		return -EINVAL;
-
-	return 0;
-}
-
-
-=======
->>>>>>> fd3e8a846... Upstream Kernel to 3.10.108
 static int check_match(struct xt_entry_match *m, struct xt_mtchk_param *par)
 {
 	const struct ip6t_ip6 *ipv6 = par->entryinfo;
@@ -753,15 +734,11 @@ check_entry_size_and_hooks(struct ip6t_entry *e,
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
-	err = check_entry(e);
-=======
 	if (!ip6_checkentry(&e->ipv6))
 		return -EINVAL;
 
 	err = xt_check_entry_offsets(e, e->elems, e->target_offset,
 				     e->next_offset);
->>>>>>> fd3e8a846... Upstream Kernel to 3.10.108
 	if (err)
 		return err;
 
@@ -1486,16 +1463,11 @@ check_compat_entry_size_and_hooks(struct compat_ip6t_entry *e,
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
-	/* For purposes of check_entry casting the compat entry is fine */
-	ret = check_entry((struct ip6t_entry *)e);
-=======
 	if (!ip6_checkentry(&e->ipv6))
 		return -EINVAL;
 
 	ret = xt_compat_check_entry_offsets(e, e->elems,
 					    e->target_offset, e->next_offset);
->>>>>>> fd3e8a846... Upstream Kernel to 3.10.108
 	if (ret)
 		return ret;
 

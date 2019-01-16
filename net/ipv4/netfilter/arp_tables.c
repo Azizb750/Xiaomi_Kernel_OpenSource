@@ -271,6 +271,11 @@ unsigned int arpt_do_table(struct sk_buff *skb,
 	local_bh_disable();
 	addend = xt_write_recseq_begin();
 	private = table->private;
+   /*
+	 * Ensure we load private-> members after we've fetched the base
+   * pointer.
+	 */
+	smp_read_barrier_depends();
 	table_base = private->entries[smp_processor_id()];
 
 	e = get_entry(table_base, private->hook_entry[hook]);
@@ -355,7 +360,7 @@ static inline bool unconditional(const struct arpt_entry *e)
 	static const struct arpt_arp uncond;
 
 	return e->target_offset == sizeof(struct arpt_entry) &&
-		memcmp(&e->arp, &uncond, sizeof(uncond)) == 0;
+	       memcmp(&e->arp, &uncond, sizeof(uncond)) == 0;
 }
 
 /* Figures out from what hook each rule can be called: returns 0 if
@@ -469,27 +474,6 @@ static int mark_source_chains(const struct xt_table_info *newinfo,
 	return 1;
 }
 
-<<<<<<< HEAD
-static inline int check_entry(const struct arpt_entry *e)
-{
-	const struct xt_entry_target *t;
-
-	if (!arp_checkentry(&e->arp))
-		return -EINVAL;
-
-	if (e->target_offset + sizeof(struct xt_entry_target) > e->next_offset)
-		return -EINVAL;
-
-	t = arpt_get_target_c(e);
-	if (e->target_offset + t->u.target_size > e->next_offset)
-		return -EINVAL;
-
-	return 0;
-}
-
-
-=======
->>>>>>> fd3e8a846... Upstream Kernel to 3.10.108
 static inline int check_target(struct arpt_entry *e, const char *name)
 {
 	struct xt_entry_target *t = arpt_get_target(e);
@@ -579,15 +563,11 @@ static inline int check_entry_size_and_hooks(struct arpt_entry *e,
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
-	err = check_entry(e);
-=======
 	if (!arp_checkentry(&e->arp))
 		return -EINVAL;
 
 	err = xt_check_entry_offsets(e, e->elems, e->target_offset,
 				     e->next_offset);
->>>>>>> fd3e8a846... Upstream Kernel to 3.10.108
 	if (err)
 		return err;
 
@@ -1220,16 +1200,11 @@ check_compat_entry_size_and_hooks(struct compat_arpt_entry *e,
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
-	/* For purposes of check_entry casting the compat entry is fine */
-	ret = check_entry((struct arpt_entry *)e);
-=======
 	if (!arp_checkentry(&e->arp))
 		return -EINVAL;
 
 	ret = xt_compat_check_entry_offsets(e, e->elems, e->target_offset,
 					    e->next_offset);
->>>>>>> fd3e8a846... Upstream Kernel to 3.10.108
 	if (ret)
 		return ret;
 
