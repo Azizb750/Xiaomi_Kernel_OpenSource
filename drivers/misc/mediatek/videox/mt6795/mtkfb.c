@@ -1793,48 +1793,6 @@ static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned l
 	printk("mtkfb_compat_ioctl, info=%p, cmd nr=0x%08x, cmd size=0x%08x,arg=0x%lx\n", info, 
 		   (unsigned int)_IOC_NR(cmd), (unsigned int)_IOC_SIZE(cmd),arg);
 
-<<<<<<< HEAD
-    switch(cmd)
-    {
-        case COMPAT_MTKFB_GET_POWERSTATE:
-        {
-            compat_uint_t __user *data32;
-            int power_state = 0;
-            
-            data32 = compat_ptr(arg);   
-            if(primary_display_is_sleepd())
-                power_state = 0;
-            else
-                power_state = 1;
-		  
-            if (put_user(power_state, data32))
-            {
-                  printk("MTKFB_GET_POWERSTATE failed\n");
-                  return -EFAULT;
-            }
-            printk("MTKFB_GET_POWERSTATE success %d\n",power_state);
-            return 0;
-        }
-        case COMPAT_MTKFB_CAPTURE_FRAMEBUFFER:
-        {
-              compat_ulong_t __user *data32; 
-              unsigned long  *pbuf; 
-              compat_ulong_t l;
-              
-			  data32 = compat_ptr(arg);
-              pbuf = compat_alloc_user_space(sizeof(unsigned long));
-	          r = get_user(l, data32);
-	          r |= put_user(l, pbuf);
-              primary_display_capture_framebuffer_ovl(*pbuf, eBGRA8888);
-			  return  0;
-        }
-        
-        default:
-          printk("error, unknown mtkfb_compat_ioctl, info=%p, cmd nr=0x%08x, cmd size=0x%08x\n", info, 
-        (unsigned int)_IOC_NR(cmd), (unsigned int)_IOC_SIZE(cmd));
-          return -EINVAL;
-    }
-=======
 	switch (cmd) {
 	case COMPAT_MTKFB_GET_POWERSTATE:
 	{
@@ -1899,7 +1857,6 @@ static int mtkfb_compat_ioctl(struct fb_info *info, unsigned int cmd, unsigned l
 		       (unsigned int)_IOC_NR(cmd), (unsigned int)_IOC_SIZE(cmd));
 		return -EINVAL;
 	}
->>>>>>> 222db1d34... Port https://git.launchpad.net/~phablet-team/avila/+git/kernel-3.10/commit/?h=ubuntu&id=e09e85241b5ad2846cfdc5a27cbc827f17ab01b6
 }
 #endif
 
