@@ -41,7 +41,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */ /**************************************************************************/
 
-//#warning 
+//#warning FIXME:  add the MMU specialisation defines here (or in hwdefs, perhaps?)
 
 #ifndef __RGXHEAPCONFIG_H__
 #define __RGXHEAPCONFIG_H__
@@ -95,7 +95,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  
 	/* Start at 903GiB. Size of 4 GiB */
 	#define RGX_FIRMWARE_HEAP_BASE				IMG_UINT64_C(0xE1C0000000)
-    #define RGX_FIRMWARE_HEAP_SIZE				(3 * RGXFW_SEGMMU_DMAP_SIZE)
+    #define RGX_FIRMWARE_HEAP_SIZE				IMG_UINT64_C(0x0100000000)
 
 	/* Start at 912GiB. Size of 16 GiB. 16GB aligned to match RGX_CR_ISP_PIXEL_BASE */
     #define RGX_TQ3DPARAMETERS_HEAP_BASE		IMG_UINT64_C(0xE400000000)

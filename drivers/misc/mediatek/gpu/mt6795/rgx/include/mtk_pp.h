@@ -64,9 +64,6 @@ void MTKPP_LOGTIME(MTKPP_ID id, const char *);
 /* trigger AEE to generate a DB */
 void MTKPP_TriggerAEE(void);
 
-/* Dump firmware log  */
-void MTKPP_dump_fw_log(void);
-
 #else
 
 #define MTKPP_LOG(...)

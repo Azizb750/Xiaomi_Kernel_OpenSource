@@ -1,9 +1,6 @@
 /*************************************************************************/ /*!
-@File
-@Title          Common bridge header for pdumpcmm
+@Title          Direct client bridge for devicememhistory
 @Copyright      Copyright (c) Imagination Technologies Ltd. All Rights Reserved
-@Description    Declares common defines and structures that are used by both
-                the client and sever side of the bridge for pdumpcmm
 @License        Dual MIT/GPLv2
 
 The contents of this file are subject to the MIT license as set out below.
@@ -42,46 +39,50 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */ /**************************************************************************/
 
-#ifndef COMMON_PDUMPCMM_BRIDGE_H
-#define COMMON_PDUMPCMM_BRIDGE_H
+#include "client_devicememhistory_bridge.h"
+#include "img_defs.h"
+#include "pvr_debug.h"
 
-#include "devicemem_typedefs.h"
-#include "pdumpdefs.h"
+/* Module specific includes */
+#include "img_types.h"
+#include "mm_common.h"
 
-
-#include "pvr_bridge_io.h"
-
-#define PVRSRV_BRIDGE_PDUMPCMM_CMD_FIRST			(PVRSRV_BRIDGE_PDUMPCMM_START)
-#define PVRSRV_BRIDGE_PDUMPCMM_DEVMEMPDUMPBITMAP			PVRSRV_IOWR(PVRSRV_BRIDGE_PDUMPCMM_CMD_FIRST+0)
-#define PVRSRV_BRIDGE_PDUMPCMM_CMD_LAST			(PVRSRV_BRIDGE_PDUMPCMM_CMD_FIRST+0)
+#include "devicemem_history_server.h"
 
 
-/*******************************************
-            DevmemPDumpBitmap          
- *******************************************/
-
-/* Bridge in structure for DevmemPDumpBitmap */
-typedef struct PVRSRV_BRIDGE_IN_DEVMEMPDUMPBITMAP_TAG
-{
-	IMG_HANDLE hDeviceNode;
-	IMG_CHAR * puiFileName;
-	IMG_UINT32 ui32FileOffset;
-	IMG_UINT32 ui32Width;
-	IMG_UINT32 ui32Height;
-	IMG_UINT32 ui32StrideInBytes;
-	IMG_DEV_VIRTADDR sDevBaseAddr;
-	IMG_HANDLE hDevmemCtx;
-	IMG_UINT32 ui32Size;
-	PDUMP_PIXEL_FORMAT ePixelFormat;
-	IMG_UINT32 ui32AddrMode;
-	IMG_UINT32 ui32PDumpFlags;
-} __attribute__((packed)) PVRSRV_BRIDGE_IN_DEVMEMPDUMPBITMAP;
-
-
-/* Bridge out structure for DevmemPDumpBitmap */
-typedef struct PVRSRV_BRIDGE_OUT_DEVMEMPDUMPBITMAP_TAG
+IMG_INTERNAL PVRSRV_ERROR IMG_CALLCONV BridgeDevicememHistoryMap(IMG_HANDLE hBridge,
+								 IMG_DEV_VIRTADDR sDevVAddr,
+								 IMG_DEVMEM_SIZE_T uiSize,
+								 const IMG_CHAR *puiText)
 {
 	PVRSRV_ERROR eError;
-} __attribute__((packed)) PVRSRV_BRIDGE_OUT_DEVMEMPDUMPBITMAP;
+	PVR_UNREFERENCED_PARAMETER(hBridge);
 
-#endif /* COMMON_PDUMPCMM_BRIDGE_H */
+
+	eError =
+		DevicememHistoryMapKM(
+					sDevVAddr,
+					uiSize,
+					puiText);
+
+	return eError;
+}
+
+IMG_INTERNAL PVRSRV_ERROR IMG_CALLCONV BridgeDevicememHistoryUnmap(IMG_HANDLE hBridge,
+								   IMG_DEV_VIRTADDR sDevVAddr,
+								   IMG_DEVMEM_SIZE_T uiSize,
+								   const IMG_CHAR *puiText)
+{
+	PVRSRV_ERROR eError;
+	PVR_UNREFERENCED_PARAMETER(hBridge);
+
+
+	eError =
+		DevicememHistoryUnmapKM(
+					sDevVAddr,
+					uiSize,
+					puiText);
+
+	return eError;
+}
+
