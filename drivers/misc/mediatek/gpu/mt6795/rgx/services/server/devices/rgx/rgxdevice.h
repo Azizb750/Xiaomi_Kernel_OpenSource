@@ -261,6 +261,7 @@ typedef struct _PVRSRV_RGXDEV_INFO_
 	IMG_BOOL				bFTraceGPUEventsEnabled;
 	IMG_HANDLE				hGPUTraceTLConnection;
 	IMG_HANDLE				hGPUTraceTLStream;
+	IMG_UINT64				ui64LastSampledTimeCorrOSTimeStamp;
 #endif
 
 	/* If we do 10 deferred memory allocations per second, then the ID would warp around after 13 years */

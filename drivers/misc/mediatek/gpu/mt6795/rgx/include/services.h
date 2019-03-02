@@ -892,22 +892,25 @@ IMG_IMPORT IMG_PVOID IMG_CALLCONV PVRSRVReallocUserModeMem (IMG_PVOID pvBase, IM
 @Return         None
  */ /**************************************************************************/
 IMG_IMPORT IMG_VOID  IMG_CALLCONV PVRSRVFreeUserModeMem (IMG_PVOID pvMem);
+
 /**************************************************************************/ /*!
 @Function       PVRSRVMemCopy
 @Description    Copy a block of memory
-@Input          pvDst       pointer to the destination
-@Input          pvSrc       pointer to the source location
-@Input          uiSize    the amount of memory to copy
+                Safe implementation of memset for use with device memory.
+@Input          pvDst       Pointer to the destination
+@Input          pvSrc       Pointer to the source location
+@Input          uiSize      The amount of memory to copy in bytes
 @Return         None
  */ /**************************************************************************/
 IMG_IMPORT IMG_VOID PVRSRVMemCopy(IMG_VOID *pvDst, const IMG_VOID *pvSrc, IMG_SIZE_T uiSize);
 
 /**************************************************************************/ /*!
 @Function       PVRSRVMemSet
-@Description    Set all bytes in a region of memory to the specified value
-@Input          pvDest      pointer to the start of the memory region
-@Input          ui8Value    the value to be written
-@Input          uiSize    the number of bytes to be set to ui8Value
+@Description    Set all bytes in a region of memory to the specified value.
+                Safe implementation of memset for use with device memory.
+@Input          pvDest      Pointer to the start of the memory region
+@Input          ui8Value    The value to be written
+@Input          uiSize      The number of bytes to be set to ui8Value
 @Return         None
  */ /**************************************************************************/
 IMG_IMPORT IMG_VOID PVRSRVMemSet(IMG_VOID *pvDest, IMG_UINT8 ui8Value, IMG_SIZE_T uiSize);

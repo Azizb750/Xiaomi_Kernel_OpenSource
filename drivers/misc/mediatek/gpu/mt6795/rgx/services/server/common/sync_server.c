@@ -289,7 +289,7 @@ IMG_VOID _SyncConnectionRef(SYNC_CONNECTION_DATA *psSyncConnectionData)
 
 	OSLockAcquire(psSyncConnectionData->hLock);
 	ui32RefCount = ++psSyncConnectionData->ui32RefCount;
-	OSLockRelease(psSyncConnectionData->hLock);	
+	OSLockRelease(psSyncConnectionData->hLock);
 
 	SYNC_REFCOUNT_PRINT("%s: Sync connection %p, refcount = %d",
 						__FUNCTION__, psSyncConnectionData, ui32RefCount);
@@ -332,7 +332,7 @@ IMG_VOID _SyncConnectionAddBlock(CONNECTION_DATA *psConnection, SYNC_PRIMITIVE_B
 			the lock between as the refcount and list don't have to be atomic w.r.t. to each other
 		*/
 		_SyncConnectionRef(psSyncConnectionData);
-	
+
 		OSLockAcquire(psSyncConnectionData->hLock);
 		if (psConnection != IMG_NULL)
 		{
@@ -566,7 +566,7 @@ PVRSRVServerSyncAllocKM(PVRSRV_DEVICE_NODE *psDevNode,
 	}
 
 	/* szClassName must be setup now and used for the SyncPrimAlloc call because
-	 * pszClassName is allocated in the bridge code is not NULL terminated 
+	 * pszClassName is allocated in the bridge code is not NULL terminated
 	 */
 	if(pszClassName)
 	{
@@ -1062,7 +1062,7 @@ static IMG_VOID _ServerSyncDebugRequest(PVRSRV_DBGREQ_HANDLE hDebugRequestHandle
 	DUMPDEBUG_PRINTF_FUNC *pfnDumpDebugPrintf = IMG_NULL;
 
 	PVR_UNREFERENCED_PARAMETER(hDebugRequestHandle);
-	
+
 	pfnDumpDebugPrintf = g_pfnDumpDebugPrintf;
 	if (ui32VerbLevel == DEBUG_REQUEST_VERBOSITY_HIGH)
 	{

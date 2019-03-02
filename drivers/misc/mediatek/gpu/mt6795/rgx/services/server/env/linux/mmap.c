@@ -68,15 +68,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* WARNING!
  * The mmap code has its own mutex, to prevent a possible deadlock,
- * when using gPVRSRVLock.
+ * when using the bridge lock.
  * The Linux kernel takes the mm->mmap_sem before calling the mmap
  * entry points (PVRMMap, MMapVOpen, MMapVClose), but the ioctl
- * entry point may take mm->mmap_sem during fault handling, or
- * before calling get_user_pages.  If gPVRSRVLock was used in the
+ * entry point may take mm->mmap_sem during fault handling, or 
+ * before calling get_user_pages.  If the bridge lock was used in the
  * mmap entry points, a deadlock could result, due to the ioctl
  * and mmap code taking the two locks in different orders.
  * As a corollary to this, the mmap entry points must not call
- * any driver code that relies on gPVRSRVLock is held.
+ * any driver code that relies on the bridge lock is held.
  */
 static struct mutex g_sMMapMutex;
 
@@ -322,7 +322,7 @@ int MMapPMR(struct file *pFile, struct vm_area_struct *ps_vma)
      * page requests have already been validated.
      */
     ps_vma->vm_flags |= VM_DONTEXPAND;
-
+    
     /* Don't allow mapping to be inherited across a process fork */
     ps_vma->vm_flags |= VM_DONTCOPY;
 
@@ -418,7 +418,7 @@ int MMapPMR(struct file *pFile, struct vm_area_struct *ps_vma)
 	        {
 	            // N.B. not the right error code, but, it doesn't get propagated anyway... :(
 	            eError = PVRSRV_ERROR_OUT_OF_MEMORY;
-
+	
 	            goto e2;
 	        }
 

@@ -264,15 +264,75 @@ struct _PMR_PAGELIST_
  * the memory management bridge. This should make possible avoid the use of the bridge
  * lock in mmap.c avoiding regressions.
  */
+
+/* this structure tracks the current owner of the PMR lock, avoiding use of
+ * the Linux (struct mutex).owner field which is not guaranteed to be up to date.
+ * there is Linux-specific code to provide an opimised approach for Linux,
+ * using the kernel (struct task_struct *) instead of a PID/TID combination.
+ */
+typedef struct _PMR_LOCK_OWNER_
+{
+#if defined(LINUX)
+	struct task_struct *task;
+#else
+	POS_LOCK hPIDTIDLock;
+	IMG_PID uiPID;
+	IMG_UINTPTR_T uiTID;
+#endif
+} PMR_LOCK_OWNER;
+
 POS_LOCK gGlobalLookupPMRLock;
+static PMR_LOCK_OWNER gsPMRLockOwner;
+
+static IMG_VOID _SetPMRLockOwner(IMG_VOID)
+{
+#if defined(LINUX)
+	gsPMRLockOwner.task = current;
+#else
+	OSLockAcquire(gsPMRLockOwner.hPIDTIDLock);
+	gsPMRLockOwner.uiPID = OSGetCurrentProcessIDKM();
+	gsPMRLockOwner.uiTID = OSGetCurrentThreadIDKM();
+	OSLockRelease(gsPMRLockOwner.hPIDTIDLock);
+#endif
+}
+
+/* Must only be called by the thread which owns the PMR lock */
+static IMG_VOID _ClearPMRLockOwner(IMG_VOID)
+{
+#if defined(LINUX)
+	gsPMRLockOwner.task = IMG_NULL;
+#else
+	OSLockAcquire(gsPMRLockOwner.hPIDTIDLock);
+	gsPMRLockOwner.uiPID = 0;
+	gsPMRLockOwner.uiTID = 0;
+	OSLockRelease(gsPMRLockOwner.hPIDTIDLock);
+#endif
+}
+
+static IMG_BOOL _ComparePMRLockOwner(IMG_VOID)
+{
+#if defined(LINUX)
+	return gsPMRLockOwner.task == current;
+#else
+	IMG_BOOL bRet;
+
+	OSLockAcquire(gsPMRLockOwner.hPIDTIDLock);
+	bRet = (gsPMRLockOwner.uiPID == OSGetCurrentProcessIDKM()) &&
+			(gsPMRLockOwner.uiTID == OSGetCurrentThreadIDKM());
+	OSLockRelease(gsPMRLockOwner.hPIDTIDLock);
+	return bRet;
+#endif
+}
 
 IMG_VOID PMRLock()
 {
 	OSLockAcquire(gGlobalLookupPMRLock);
+	_SetPMRLockOwner();
 }
 
 IMG_VOID PMRUnlock()
 {
+	_ClearPMRLockOwner();
 	OSLockRelease(gGlobalLookupPMRLock);
 }
 
@@ -284,7 +344,7 @@ IMG_BOOL PMRIsLocked(void)
 
 IMG_BOOL PMRIsLockedByMe(void)
 {
-	return OSLockIsLockedByMe(gGlobalLookupPMRLock);
+	return PMRIsLocked() && _ComparePMRLockOwner();
 }
 
 #define MIN3(a,b,c)	(((a) < (b)) ? (((a) < (c)) ? (a):(c)) : (((b) < (c)) ? (b):(c)))

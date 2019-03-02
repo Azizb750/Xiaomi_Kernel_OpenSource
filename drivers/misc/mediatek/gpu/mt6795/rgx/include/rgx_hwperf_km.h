@@ -262,12 +262,12 @@ IMG_UINT32 ui32PID;          /*!< Process identifier */\
 IMG_UINT32 ui32DMContext;    /*!< RenderContext for a TA,3D, Compute context for CDM, etc. */\
 IMG_UINT32 ui32RenderTarget; /*!< RenderTarget for a TA,3D, 0x0 otherwise */\
 IMG_UINT32 ui32ExtJobRef; /*!< Externally provided job reference used to track work for debugging purposes */\
-IMG_UINT32 ui32IntJobRef; /*!< Internally provided job reference used to track work for debugging purposes */
+IMG_UINT32 ui32IntJobRef; /*!< Internally provided job reference used to track work for debugging purposes */\
+IMG_UINT32 ui32TimeCorrIndex; /*!< Index to the time correlation at the time the packet was generated */
 
 typedef struct
 {
 	RGX_HWPERF_HW_DATA_FIELDS_LIST
-	IMG_UINT32 ui32Reserved1; /*!< Define only if needed to make RGX_HWPERF_HW_DATA_FIELDS 8-byte aligned */
 } RGX_HWPERF_HW_DATA_FIELDS;
 
 RGX_FW_STRUCT_SIZE_ASSERT(RGX_HWPERF_HW_DATA_FIELDS)

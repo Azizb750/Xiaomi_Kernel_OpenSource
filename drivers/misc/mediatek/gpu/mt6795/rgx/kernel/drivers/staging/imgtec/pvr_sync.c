@@ -629,6 +629,7 @@ static void wait_for_sync(struct pvr_sync_native_sync_prim *sync)
 			pr_err("pvr_sync: %s: Error waiting on event object (%s)\n",
 				__func__,
 				PVRSRVGetErrorStringKM(error));
+			MTKPP_dump_fw_log();
 		}
 	}
 

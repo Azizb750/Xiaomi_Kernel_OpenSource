@@ -46,7 +46,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <asm/div64.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>
-#include <linux/hugetlb.h>
+#include <linux/hugetlb.h> 
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
@@ -98,6 +98,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif /* EMULATOR */
 
 ENV_DATA *gpsEnvData = IMG_NULL;
+
+struct task_struct *OSGetBridgeLockOwner(void);
 
 /*
 	Create a 4MB pool which should be more then enough in most cases,
@@ -529,7 +531,7 @@ ENV_DATA *OSGetEnvData(void)
 /*************************************************************************/ /*!
 @Function       OSReleaseThreadQuanta
 @Description    Releases thread quanta
-*/ /**************************************************************************/
+*/ /**************************************************************************/ 
 void OSReleaseThreadQuanta(void)
 {
 	schedule();
@@ -549,8 +551,8 @@ static inline IMG_UINT64 Clockns64(void)
 {
 	IMG_UINT64 timenow;
 
-	/* Kernel thread preempt protection. Some architecture implementations
-	 * (ARM) of sched_clock are not preempt safe when the kernel is configured
+	/* Kernel thread preempt protection. Some architecture implementations 
+	 * (ARM) of sched_clock are not preempt safe when the kernel is configured 
 	 * as such e.g. CONFIG_PREEMPT and others.
 	 */
 	preempt_disable();
@@ -575,7 +577,7 @@ static inline IMG_UINT64 Clockns64(void)
 IMG_UINT64 OSClockns64(void)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
-	return Clockns64();
+	return Clockns64();	
 #else
 	return ((IMG_UINT64)Clockus()) * 1000ULL;
 #endif
@@ -603,7 +605,7 @@ IMG_UINT64 OSClockus64(void)
 @Function       OSClockus
 @Description    This function returns the clock in microseconds
 @Return         clock (us)
-*/ /**************************************************************************/
+*/ /**************************************************************************/ 
 IMG_UINT32 OSClockus(void)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
@@ -618,7 +620,7 @@ IMG_UINT32 OSClockus(void)
 @Function       OSClockms
 @Description    This function returns the clock in milliseconds
 @Return         clock (ms)
-*/ /**************************************************************************/
+*/ /**************************************************************************/ 
 IMG_UINT32 OSClockms(void)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
@@ -760,7 +762,7 @@ static irqreturn_t DeviceISRWrapper(int irq, void *dev_id)
 	OSInstallDeviceLISR
 */
 PVRSRV_ERROR OSInstallDeviceLISR(PVRSRV_DEVICE_CONFIG *psDevConfig,
-				 IMG_HANDLE *hLISRData,
+				 IMG_HANDLE *hLISRData, 
 				 PFN_LISR pfnLISR,
 				 void *pvData)
 {
@@ -772,7 +774,7 @@ PVRSRV_ERROR OSInstallDeviceLISR(PVRSRV_DEVICE_CONFIG *psDevConfig,
 					hLISRData);
 #else
 	LISR_DATA *psLISRData;
-	unsigned long flags = IRQF_TRIGGER_LOW;
+	unsigned long flags = 0;
 
 	psLISRData = kmalloc(sizeof(LISR_DATA), GFP_KERNEL);
 
@@ -1222,7 +1224,7 @@ IMG_UINT8 OSReadHWReg8(IMG_PVOID	pvLinRegBaseAddr,
 #if !defined(NO_HARDWARE)
 	return (IMG_UINT8) readb((IMG_PBYTE)pvLinRegBaseAddr+ui32Offset);
 #else
-	return 0x4e;
+	return 0x4e;	
 #endif
 }
 
@@ -1235,7 +1237,7 @@ IMG_UINT16 OSReadHWReg16(IMG_PVOID	pvLinRegBaseAddr,
 #if !defined(NO_HARDWARE)
 	return (IMG_UINT16) readw((IMG_PBYTE)pvLinRegBaseAddr+ui32Offset);
 #else
-	return 0x3a4e;
+	return 0x3a4e;	
 #endif
 }
 
@@ -1248,7 +1250,7 @@ IMG_UINT32 OSReadHWReg32(IMG_PVOID	pvLinRegBaseAddr,
 #if !defined(NO_HARDWARE)
 	return (IMG_UINT32) readl((IMG_PBYTE)pvLinRegBaseAddr+ui32Offset);
 #else
-	return 0x30f73a4e;
+	return 0x30f73a4e;	
 #endif
 }
 
@@ -1279,7 +1281,7 @@ IMG_DEVMEM_SIZE_T OSReadHWRegBank(IMG_PVOID pvLinRegBaseAddr,
 #if !defined(NO_HARDWARE)
 	IMG_DEVMEM_SIZE_T uiCounter;
 
-
+	
 
 	for(uiCounter = 0; uiCounter < uiDstBufLen; uiCounter++) {
 		*(pui8DstBuf + uiCounter) =
@@ -1355,7 +1357,7 @@ IMG_DEVMEM_SIZE_T OSWriteHWRegBank(void *pvLinRegBaseAddr,
 #if !defined(NO_HARDWARE)
 	IMG_DEVMEM_SIZE_T uiCounter;
 
-
+	
 
 	for(uiCounter = 0; uiCounter < uiSrcBufLen; uiCounter++) {
 		writeb(*(pui8SrcBuf + uiCounter),
@@ -1970,14 +1972,23 @@ void OSDumpStack(void)
 	dump_stack();
 }
 
+static struct task_struct *gsOwner;
+
 void OSAcquireBridgeLock(void)
 {
 	mutex_lock(&gPVRSRVLock);
+	gsOwner = current;
 }
 
 void OSReleaseBridgeLock(void)
 {
+	gsOwner = NULL;
 	mutex_unlock(&gPVRSRVLock);
+}
+
+struct task_struct *OSGetBridgeLockOwner(void)
+{
+	return gsOwner;
 }
 
 

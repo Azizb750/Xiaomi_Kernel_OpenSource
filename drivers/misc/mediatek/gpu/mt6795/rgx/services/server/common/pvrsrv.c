@@ -318,7 +318,7 @@ static IMG_VOID PVRSRVEnumerateDevicesKM_ForEachVaCb(PVRSRV_DEVICE_NODE *psDevic
  @output pui32DeviceIndex:	Pointer to called supplied buffer to receive the
  							list of device indexes
 
- @return PVRSRV_ERROR  :
+ @return PVRSRV_ERROR  :	
 
 ******************************************************************************/
 IMG_EXPORT
@@ -384,7 +384,7 @@ static IMG_VOID CleanupThread(IMG_PVOID pvData)
 	/* While the driver is in a good state and is not being unloaded
 	 * try to free any deferred items when RESMAN signals
 	 */
-	while ((psPVRSRVData->eServicesState == PVRSRV_SERVICES_STATE_OK) &&
+	while ((psPVRSRVData->eServicesState == PVRSRV_SERVICES_STATE_OK) && 
 			(!psPVRSRVData->bUnload))
 	{
 		/* Wait until RESMAN signals for deferred clean up OR wait for a
@@ -525,7 +525,7 @@ static IMG_VOID DevicesWatchdogThread(IMG_PVOID pvData)
 		{
 			PVRSRV_DEVICE_NODE* psDeviceNode = psPVRSRVData->apsRegisteredDevNodes[i];
 			PVRSRV_RGXDEV_INFO* psDevInfo = (PVRSRV_RGXDEV_INFO*) psDeviceNode->pvDevice;
-
+			
 			if (psDeviceNode->pfnUpdateHealthStatus != IMG_NULL)
 			{
 				eError = psDeviceNode->pfnUpdateHealthStatus(psDeviceNode, IMG_TRUE);
@@ -549,8 +549,8 @@ static IMG_VOID DevicesWatchdogThread(IMG_PVOID pvData)
 				}
 			}
 			ePreviousHealthStatus = psDeviceNode->eHealthStatus;
-
-			/* Attempt to service the HWPerf buffer to regularly transport
+			
+			/* Attempt to service the HWPerf buffer to regularly transport 
 			 * idle / periodic packets to host buffer. */
 			if (psDeviceNode->pfnServiceHWPerf != IMG_NULL)
 			{
@@ -583,7 +583,7 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVInit(IMG_VOID)
 	IMG_UINT32 i;
 
 #if defined (SUPPORT_RGX)
-
+	
 	sRegisterDevice[PVRSRV_DEVICE_TYPE_RGX] = RGXRegisterDevice;
 #endif
 
@@ -751,7 +751,7 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVInit(IMG_VOID)
 	{
 		if (PVRSRVRegisterDevice(&psSysConfig->pasDevices[i]) != PVRSRV_OK)
 		{
-
+			
 			return eError;
 		}
 
@@ -925,8 +925,8 @@ IMG_VOID IMG_CALLCONV PVRSRVDeInit(IMG_VOID)
 	}
 	SysDestroyConfigData(gpsSysConfig);
 
-	/* Clean up Transport Layer resources that remain.
-	 * Done after RGX node clean up as HWPerf stream is destroyed during
+	/* Clean up Transport Layer resources that remain. 
+	 * Done after RGX node clean up as HWPerf stream is destroyed during 
 	 * this
 	 */
 	TLDeInit();
@@ -958,7 +958,7 @@ IMG_VOID IMG_CALLCONV PVRSRVDeInit(IMG_VOID)
 	{
 		PDUMPDEINIT();
 	}
-
+	
 	/* destroy event object */
 	if (gpsPVRSRVData->hGlobalEventObject)
 	{
@@ -980,7 +980,7 @@ IMG_VOID IMG_CALLCONV PVRSRVDeInit(IMG_VOID)
 			PVRSRV_CMDCOMP_NOTIFY	*psNotify;
 
 			dllist_remove_node(psNode);
-
+			
 			psNotify = IMG_CONTAINER_OF(psNode, PVRSRV_CMDCOMP_NOTIFY, sListNode);
 			OSFreeMem(psNotify);
 
@@ -1022,7 +1022,7 @@ IMG_VOID IMG_CALLCONV PVRSRVDeInit(IMG_VOID)
 	}
 
 	ResManDeInit();
-
+	
 	OSDeInitEnvData();
 
 	for (i=0;i<gpsPVRSRVData->ui32RegisteredPhysHeaps;i++)
@@ -1048,7 +1048,7 @@ PVRSRV_ERROR LMA_MMUPxAlloc(PVRSRV_DEVICE_NODE *psDevNode, IMG_SIZE_T uiSize,
 
 	PVR_ASSERT((uiSize & OSGetPageMask()) == 0);
 
-	bSuccess = RA_Alloc(psDevNode->psLocalDevMemArena,
+	bSuccess = RA_Alloc(psDevNode->psLocalDevMemArena, 
 						uiSize,
 						0,					/* No flags */
 						OSGetPageSize(),
@@ -1259,7 +1259,7 @@ static PVRSRV_ERROR IMG_CALLCONV PVRSRVRegisterDevice(PVRSRV_DEVICE_CONFIG *psDe
 		{
 			RA_Delete(psDeviceNode->psLocalDevMemArena);
 			eError = PVRSRV_ERROR_OUT_OF_MEMORY;
-			goto e2;
+			goto e2;		
 		}
 
 
@@ -1294,7 +1294,7 @@ static PVRSRV_ERROR IMG_CALLCONV PVRSRVRegisterDevice(PVRSRV_DEVICE_CONFIG *psDe
 		psDeviceNode->pfnCreateRamBackedPMR[PVRSRV_DEVICE_PHYS_HEAP_CPU_LOCAL] = PhysmemNewOSRamBackedPMR;
 	}
 
-
+	
 	psDeviceNode->pszMMUPxPDumpMemSpaceName = PhysHeapPDumpMemspaceName(psDeviceNode->apsPhysHeap[PVRSRV_DEVICE_PHYS_HEAP_GPU_LOCAL]);
 	psDeviceNode->uiMMUPxLog2AllocGran = OSGetPageShift();
 
@@ -1321,7 +1321,7 @@ static PVRSRV_ERROR IMG_CALLCONV PVRSRVRegisterDevice(PVRSRV_DEVICE_CONFIG *psDe
 	PVR_DPF((PVR_DBG_MESSAGE, "Registered device %d of type %d", psDeviceNode->sDevId.ui32DeviceIndex, psDeviceNode->sDevId.eDeviceType));
 	PVR_DPF((PVR_DBG_MESSAGE, "Register bank address = 0x%08lx", (unsigned long)psDevConfig->sRegsCpuPBase.uiAddr));
 	PVR_DPF((PVR_DBG_MESSAGE, "IRQ = %d", psDevConfig->ui32IRQ));
-
+	
 	/* and finally insert the device into the dev-list */
 	List_PVRSRV_DEVICE_NODE_Insert(&psPVRSRVData->psDeviceNodeList, psDeviceNode);
 
@@ -1477,7 +1477,7 @@ static PVRSRV_ERROR PVRSRVFinaliseSystem_SetPowerState_AnyCb(PVRSRV_DEVICE_NODE 
 
 	if (eError != PVRSRV_OK)
 	{
-		PVR_DPF((PVR_DBG_ERROR,"PVRSRVFinaliseSystem: Failed PVRSRVSetDevicePowerStateKM call (%s, device index: %d)",
+		PVR_DPF((PVR_DBG_ERROR,"PVRSRVFinaliseSystem: Failed PVRSRVSetDevicePowerStateKM call (%s, device index: %d)", 
 						PVRSRVGetErrorStringKM(eError),
 						psDeviceNode->sDevId.ui32DeviceIndex));
 	}
@@ -1724,13 +1724,13 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVReleaseDeviceDataKM (IMG_HANDLE hDevCookie)
 {
 	PVR_UNREFERENCED_PARAMETER(hDevCookie);
 
-	/*
-	  Empty release body as the lifetime of this resource accessed by
+	/* 
+	  Empty release body as the lifetime of this resource accessed by 
 	  PVRSRVAcquireDeviceDataKM is linked to driver lifetime, not API allocation.
 	  This is one reason why this type crosses the bridge with a shared handle.
 	  Thus no server release action is required, just bridge action to ensure
 	  associated handle is freed.
-    */
+    */ 
 	return PVRSRV_OK;
 }
 
@@ -1943,7 +1943,7 @@ PVRSRV_ERROR IMG_CALLCONV PollForValueKM (volatile IMG_UINT32*	pui32LinMemAddr,
 
 	PVR_DPF((PVR_DBG_ERROR,"PollForValueKM: Timeout. Expected 0x%x but found 0x%x (mask 0x%x).",
 			ui32Value, ui32ActualValue, ui32Mask));
-
+	
 	return PVRSRV_ERROR_TIMEOUT;
 #endif /* NO_HARDWARE */
 }
@@ -1992,7 +1992,7 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVWaitForValueKM (volatile IMG_UINT32	*pui32LinMem
 	}
 
 	eError = PVRSRV_ERROR_TIMEOUT;
-
+	
 	LOOP_UNTIL_TIMEOUT(MAX_HW_TIME_US)
 	{
 		ui32ActualValue = (*pui32LinMemAddr & ui32Mask);
@@ -2167,7 +2167,7 @@ IMG_BOOL PVRSRVSystemSnoopingOfCPUCache(IMG_VOID)
 	{
 		return IMG_TRUE;
 	}
-	return IMG_FALSE;
+	return IMG_FALSE;	
 }
 
 IMG_BOOL PVRSRVSystemSnoopingOfDeviceCache(IMG_VOID)
@@ -2223,7 +2223,7 @@ PVRSRV_ERROR PVRSRVRegisterCmdCompleteNotify(IMG_HANDLE *phNotify, PFN_CMDCOMP_N
 	if (psNotify == IMG_NULL)
 	{
 		PVR_DPF((PVR_DBG_ERROR,"%s: Not enough memory to allocate CmdCompleteNotify function", __FUNCTION__));
-		return PVRSRV_ERROR_OUT_OF_MEMORY;
+		return PVRSRV_ERROR_OUT_OF_MEMORY;		
 	}
 
 	/* Set-up the notify data */
@@ -2270,7 +2270,7 @@ static IMG_VOID _SysDebugRequestNotify(PVRSRV_DBGREQ_HANDLE hDebugRequestHandle,
 	PVRSRV_DATA *psPVRSRVData = (PVRSRV_DATA*) hDebugRequestHandle;
 	DUMPDEBUG_PRINTF_FUNC *pfnDumpDebugPrintf = IMG_NULL;
 
-	pfnDumpDebugPrintf = g_pfnDumpDebugPrintf;
+	pfnDumpDebugPrintf = g_pfnDumpDebugPrintf;	
 	/* only dump info on the lowest verbosity level */
 	if (ui32VerbLevel != DEBUG_REQUEST_VERBOSITY_LOW)
 	{
@@ -2287,13 +2287,13 @@ static IMG_VOID _SysDebugRequestNotify(PVRSRV_DBGREQ_HANDLE hDebugRequestHandle,
 			PVR_DUMPDEBUG_LOG(("Services State: OK"));
 			break;
 		}
-
+		
 		case PVRSRV_SERVICES_STATE_BAD:
 		{
 			PVR_DUMPDEBUG_LOG(("Services State: BAD"));
 			break;
 		}
-
+		
 		default:
 		{
 			PVR_DUMPDEBUG_LOG(("Services State: UNKNOWN (%d)", psPVRSRVData->eServicesState));

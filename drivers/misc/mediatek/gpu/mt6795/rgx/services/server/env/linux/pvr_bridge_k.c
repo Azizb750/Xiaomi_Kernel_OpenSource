@@ -359,7 +359,7 @@ static void *BridgeStatsSeqStart(struct seq_file *psSeqFile, loff_t *puiPosition
 {
 	PVRSRV_BRIDGE_DISPATCH_TABLE_ENTRY *psDispatchTable = (PVRSRV_BRIDGE_DISPATCH_TABLE_ENTRY *)psSeqFile->private;
 
-	mutex_lock(&gPVRSRVLock);
+	OSAcquireBridgeLock();
 
 	if (psDispatchTable == NULL || (*puiPosition) > BRIDGE_DISPATCH_TABLE_ENTRY_COUNT)
 	{
@@ -379,7 +379,7 @@ static void BridgeStatsSeqStop(struct seq_file *psSeqFile, void *pvData)
 	PVR_UNREFERENCED_PARAMETER(psSeqFile);
 	PVR_UNREFERENCED_PARAMETER(pvData);
 
-	mutex_unlock(&gPVRSRVLock);
+	OSReleaseBridgeLock();
 }
 
 static void *BridgeStatsSeqNext(struct seq_file *psSeqFile,
@@ -462,7 +462,7 @@ PVRSRV_BridgeDispatchKM(struct file *pFile, unsigned int ioctlCmd, unsigned long
 	CONNECTION_DATA *psConnection = LinuxConnectionFromFile(pFile);
 	IMG_INT err = -EFAULT;
 
-	mutex_lock(&gPVRSRVLock);
+	OSAcquireBridgeLock();
 
 #if defined(SUPPORT_DRM)
 	PVR_UNREFERENCED_PARAMETER(dev);
@@ -520,7 +520,7 @@ PVRSRV_BridgeDispatchKM(struct file *pFile, unsigned int ioctlCmd, unsigned long
 #if !defined(SUPPORT_DRM)
 unlock_and_return:
 #endif
-	mutex_unlock(&gPVRSRVLock);
+	OSReleaseBridgeLock();
 	return err;
 }
 
@@ -558,7 +558,7 @@ PVRSRV_BridgeCompatDispatchKM(struct file *pFile,
 	// make sure there is no padding inserted by compiler
 	PVR_ASSERT(sizeof(struct bridge_package_from_32) == 6 * sizeof(IMG_UINT32));
 
-	mutex_lock(&gPVRSRVLock);
+	OSAcquireBridgeLock();
 
 	if(!OSAccessOK(PVR_VERIFY_READ, (void *) arg,
 				   sizeof(struct bridge_package_from_32)))
@@ -603,7 +603,7 @@ PVRSRV_BridgeCompatDispatchKM(struct file *pFile,
 	err = BridgedDispatchKM(psConnection, &params_for_64);
 	
 unlock_and_return:
-	mutex_unlock(&gPVRSRVLock);
+	OSReleaseBridgeLock();
 	return err;
 }
 #endif /* defined(CONFIG_COMPAT) */

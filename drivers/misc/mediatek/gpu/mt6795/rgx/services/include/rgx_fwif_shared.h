@@ -82,14 +82,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*!
  ******************************************************************************
  * Force structure 8-byte alignment
- * This option was introduced to fix the ARM64 misalignment issue when accessing
+ * This was introduced to fix the ARM64 misalignment issue when accessing
  * uncached memory.
+ * It is now applied unconditionally so alignment issues cannot arise on
+ * mixed 32/64-bit architectures by Customers failing to enable it.
  *****************************************************************************/
-#if defined(FORCE_UNCACHED_ALIGN)
 #define UNCACHED_ALIGN      RGXFW_ALIGN
-#else
-#define UNCACHED_ALIGN
-#endif
 
 typedef struct _RGXFWIF_DEV_VIRTADDR_
 {

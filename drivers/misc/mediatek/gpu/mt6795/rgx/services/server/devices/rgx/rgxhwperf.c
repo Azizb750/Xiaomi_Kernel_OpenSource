@@ -915,6 +915,11 @@ static IMG_VOID RGXHWPerfFTraceGPUEnable(void)
 		gpsRgxDevInfo);
 	PVR_LOGG_IF_ERROR(eError, "PVRSRVRegisterCmdCompleteNotify", err_close_stream);
 
+	/* Reset the OS timestamp coming from the timer correlation data
+	 * associated with the latest HWPerf event we processed.
+	 */
+	gpsRgxDevInfo->ui64LastSampledTimeCorrOSTimeStamp = 0;
+
 	gpsRgxDevInfo->bFTraceGPUEventsEnabled = IMG_TRUE;
 
 err_out:
@@ -1020,7 +1025,7 @@ IMG_VOID PVRGpuTraceEnabledSet(IMG_BOOL bNewValue)
 IMG_BOOL RGXHWPerfFTraceGPUEventsEnabled(IMG_VOID)
 {
 	if (gpsRgxDevInfo)
-	return(gpsRgxDevInfo->bFTraceGPUEventsEnabled);
+		return(gpsRgxDevInfo->bFTraceGPUEventsEnabled);
 	return IMG_FALSE;
 }
 
@@ -1053,9 +1058,11 @@ static IMG_VOID RGXHWPerfFTraceGPUSwitchEvent(PVRSRV_RGXDEV_INFO *psDevInfo,
 {
 	IMG_UINT64   ui64Timestamp;
 	RGX_HWPERF_HW_DATA_FIELDS* psHWPerfPktData;
+	RGXFWIF_GPU_UTIL_FWCB *psGpuUtilFWCB = psDevInfo->psRGXFWIfGpuUtilFWCb;
+	RGXFWIF_TIME_CORR *psTimeCorr;
 	IMG_UINT32 ui32DVFSClock;
-	IMG_UINT64 ui64CRTimerStamp = RGXReadHWTimerReg(psDevInfo);
-	IMG_UINT64 ui64OSTimeStamp = OSClockus64();
+	IMG_UINT64 ui64CRTimeStamp;
+	IMG_UINT64 ui64OSTimeStamp;
 
 	PVR_DPF_ENTERED;
 
@@ -1068,21 +1075,34 @@ static IMG_VOID RGXHWPerfFTraceGPUSwitchEvent(PVRSRV_RGXDEV_INFO *psDevInfo,
 	 * filtered by ValidFTraceEvent() */
 
 	/* Calculate the OS timestamp given an RGX timestamp in the HWPerf event */
-	ui32DVFSClock = psDevInfo->psGpuDVFSHistory->aui32DVFSClockCB[psDevInfo->psGpuDVFSHistory->ui32CurrentDVFSId];
+	psTimeCorr      = &psGpuUtilFWCB->sTimeCorr[psHWPerfPktData->ui32TimeCorrIndex];
+	ui64CRTimeStamp = psTimeCorr->ui64CRTimeStamp;
+	ui64OSTimeStamp = psTimeCorr->ui64OSTimeStamp;
+	ui32DVFSClock   = psTimeCorr->ui32DVFSClock;
 	PVR_ASSERT(ui32DVFSClock>=1000000);
+
+	if(psDevInfo->ui64LastSampledTimeCorrOSTimeStamp > ui64OSTimeStamp)
+	{
+		/* The previous packet had a time reference (time correlation data) more recent
+		 * than the one in the current packet, it means the timer correlation array wrapped
+		 * too quickly (buffer too small) and in the previous call to RGXHWPerfFTraceGPUSwitchEvent
+		 * we read one of the newest timer correlations rather than one of the oldest ones.
+		 */
+		PVR_DPF((PVR_DBG_ERROR, "RGXHWPerfFTraceGPUSwitchEvent: The timestamps computed so far could be wrong! The time correlation array size should be increased to avoid this."));
+	}
+	psDevInfo->ui64LastSampledTimeCorrOSTimeStamp = ui64OSTimeStamp;
 
 	{
 		IMG_UINT32 rgxCyclesPer_uS = ui32DVFSClock/1000000;                        /* RGX Speed Hz->uHz */
 
-		IMG_UINT64 deltaRgxCycles = (ui64CRTimerStamp - psHWPerfPkt->ui64RGXTimer) /* RGX CR timer ticks delta */
+		IMG_UINT64 deltaRgxCycles = (psHWPerfPkt->ui64RGXTimer - ui64CRTimeStamp) /* RGX CR timer ticks delta */
 		                             << 8ULL ;                                                    /* x256 to convert to cycles delta */
 		IMG_UINT32 deltaRgxCycles_remainder;                                                      /* Unable to use as not in a time unit */
 		IMG_UINT64 delta_uS = OSDivide64r64(deltaRgxCycles, rgxCyclesPer_uS, &deltaRgxCycles_remainder);/* RGX time delta in uS */
-		ui64Timestamp = (ui64OSTimeStamp - delta_uS)                               /* Calculate OS time of HWPerf event */
-		                * 1000ULL;                                                                /* Convert timestamp to nS for gpu.h */
+		ui64Timestamp = ui64OSTimeStamp + (delta_uS * 1000ULL);                                   /* Calculate OS time of HWPerf event */
 
 		PVR_DPF((PVR_DBG_VERBOSE, "RGXHWPerfFTraceGPUSwitchEvent: psCurrentDvfs RGX %llu, OS %llu, DVFSCLK %u",
-				ui64CRTimerStamp, ui64OSTimeStamp, ui32DVFSClock ));
+				ui64CRTimeStamp, ui64OSTimeStamp, ui32DVFSClock ));
 
 		PVR_DPF((PVR_DBG_VERBOSE, "RGXHWPerfFTraceGPUSwitchEvent: event RGX %llu, rgxCyclesPer_uS %u, deltaRgxCycles %llu, deltaRgxCycles_remainder %u, delta_uS %llu, TS %llu, ",
 				psHWPerfPkt->ui64RGXTimer, rgxCyclesPer_uS, deltaRgxCycles, deltaRgxCycles_remainder, delta_uS, ui64Timestamp ));

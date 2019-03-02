@@ -591,7 +591,7 @@ static void PVRSRVDriverShutdown(LDM_DEV *pDevice)
 		 * processes trying to use the driver after it has been
 		 * shutdown.
 		 */
-		mutex_lock(&gPVRSRVLock);
+		OSAcquireBridgeLock();
 
 		(void) PVRSRVSetPowerStateKM(PVRSRV_SYS_POWER_STATE_OFF, IMG_TRUE);
 	}
@@ -626,7 +626,7 @@ static int PVRSRVDriverSuspend(struct device *pDevice)
 
 	if (!bDriverIsSuspended && !bDriverIsShutdown)
 	{
-		mutex_lock(&gPVRSRVLock);
+		OSAcquireBridgeLock();
 
 		if (PVRSRVSetPowerStateKM(PVRSRV_SYS_POWER_STATE_OFF, IMG_TRUE) == PVRSRV_OK)
 		{
@@ -635,7 +635,7 @@ static int PVRSRVDriverSuspend(struct device *pDevice)
 		}
 		else
 		{
-			mutex_unlock(&gPVRSRVLock);
+			OSReleaseBridgeLock();
 			res = -EINVAL;
 		}
 	}
@@ -673,7 +673,7 @@ static int PVRSRVDriverResume(struct device *pDevice)
 		if (PVRSRVSetPowerStateKM(PVRSRV_SYS_POWER_STATE_ON, IMG_TRUE) == PVRSRV_OK)
 		{
 			bDriverIsSuspended = IMG_FALSE;
-			mutex_unlock(&gPVRSRVLock);
+			OSReleaseBridgeLock();
 		}
 		else
 		{
@@ -720,7 +720,7 @@ static int PVRSRVOpen(struct inode unref__ * pInode, struct file *pFile)
 		return iRet;
 	}
 
-	mutex_lock(&gPVRSRVLock);
+	OSAcquireBridgeLock();
 
 	psPrivateData = OSAllocMem(sizeof(PVRSRV_FILE_PRIVATE_DATA));
 
@@ -751,11 +751,11 @@ static int PVRSRVOpen(struct inode unref__ * pInode, struct file *pFile)
 	list_add_tail(&psPrivateData->sDRMAuthListItem, &sDRMAuthListHead);
 #endif
 	PRIVATE_DATA(pFile) = psPrivateData;
-	mutex_unlock(&gPVRSRVLock);
+	OSReleaseBridgeLock();
 	return 0;
 
 err_unlock:	
-	mutex_unlock(&gPVRSRVLock);
+	OSReleaseBridgeLock();
 	module_put(THIS_MODULE);
 	return iRet;
 }
@@ -787,7 +787,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 {
 	PVRSRV_FILE_PRIVATE_DATA *psPrivateData;
 
-	mutex_lock(&gPVRSRVLock);
+	OSAcquireBridgeLock();
 
 #if defined(SUPPORT_DRM)
 	psPrivateData = (PVRSRV_FILE_PRIVATE_DATA *)pvPrivData;
@@ -808,7 +808,7 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 #endif
 	}
 
-	mutex_unlock(&gPVRSRVLock);
+	OSReleaseBridgeLock();
 	module_put(THIS_MODULE);
 #if defined(SUPPORT_DRM)
 	return;
@@ -1107,7 +1107,7 @@ static int __init PVRCore_Init(void)
 	MTKMFGSystemInit();
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
-    register_early_suspend(&PVRSRVEarlySuspendHandler);
+	register_early_suspend(&PVRSRVEarlySuspendHandler);
 #endif
     
 #if defined(MTK_DEBUG_PROC_PRINT)
@@ -1192,7 +1192,7 @@ static void __exit PVRCore_Cleanup(void)
 #endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
-    unregister_early_suspend(&PVRSRVEarlySuspendHandler);
+	unregister_early_suspend(&PVRSRVEarlySuspendHandler);
 #endif
     
 	/* MTK MFG sytem cleanup */

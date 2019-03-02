@@ -1234,7 +1234,6 @@ static IMG_INT DebugLevelSet(const char __user *pcBuffer,
 }
 #endif /* defined(DEBUG) */
 
-
 static void *gpvVersionDebugFSEntry;
 static void *gpvNodesDebugFSEntry;
 static void *gpvStatusDebugFSEntry;
@@ -1262,7 +1261,6 @@ int PVRDebugCreateDebugFSEntries(void)
 					NULL,
 					psPVRSRVData,
 					&gpvVersionDebugFSEntry);
-
 	if (iResult != 0)
 	{
 		return iResult;
@@ -1401,6 +1399,5 @@ void PVRDebugRemoveDebugFSEntries(void)
 		PVRDebugFSRemoveEntry(gpvVersionDebugFSEntry);
 		gpvVersionDebugFSEntry = NULL;
 	}
-
 }
 

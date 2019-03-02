@@ -612,14 +612,29 @@ PVRSRV_ERROR RGXInitSLC(IMG_HANDLE hDevHandle)
 }
 #endif
 
-static IMG_VOID _RGXMakeTimeCorrData(PVRSRV_DEVICE_NODE *psDeviceNode, RGXFWIF_TIME_CORR *psTimeCorr)
+static IMG_VOID _RGXMakeTimeCorrData(PVRSRV_DEVICE_NODE *psDeviceNode)
 {
 	PVRSRV_RGXDEV_INFO	*psDevInfo = psDeviceNode->pvDevice;
 	RGX_DATA			*psRGXData = (RGX_DATA*)psDeviceNode->psDevConfig->hDevData;
+	RGXFWIF_GPU_UTIL_FWCB *psGpuUtilFWCB = psDevInfo->psRGXFWIfGpuUtilFWCb;
+	RGXFWIF_TIME_CORR     *psTimeCorr;
+	IMG_UINT32            ui32NewIndex;
+
+	ui32NewIndex = psGpuUtilFWCB->ui32TimeCorrCurrent + 1;
+	if(ui32NewIndex == RGXFWIF_TIME_CORR_ARRAY_SIZE)
+	{
+		ui32NewIndex = 0;
+	}
+	psTimeCorr = &psGpuUtilFWCB->sTimeCorr[ui32NewIndex];
 
 	psTimeCorr->ui64CRTimeStamp = RGXReadHWTimerReg(psDevInfo);
 	psTimeCorr->ui64OSTimeStamp = OSClockns64();
 	psTimeCorr->ui32DVFSClock   = psRGXData->psRGXTimingInfo->ui32CoreClockSpeed;
+
+	/* Make sure the values are written to memory before updating the index of the current entry */
+	OSWriteMemoryBarrier();
+
+	psGpuUtilFWCB->ui32TimeCorrCurrent = ui32NewIndex;
 
 	PVR_DPF((PVR_DBG_MESSAGE,"RGXMakeTimeCorrData: Correlating OS timestamp %llu (ns) with CR timestamp %llu, GPU clock speed %uHz",
 			psTimeCorr->ui64OSTimeStamp, psTimeCorr->ui64CRTimeStamp, psTimeCorr->ui32DVFSClock));
@@ -823,7 +838,7 @@ PVRSRV_ERROR RGXPostPowerState (IMG_HANDLE				hDevHandle,
 			_RGXFWCBEntryAdd(psDeviceNode, ui64CRTimeStamp, RGXFWIF_GPU_UTIL_FWCB_TYPE_CRTIME);
 
 			/* Update the timer correlation data */
-			_RGXMakeTimeCorrData(psDeviceNode, &psDevInfo->psRGXFWIfGpuUtilFWCb->sTimeCorr);
+			_RGXMakeTimeCorrData(psDeviceNode);
 
 			/*
 				Run the RGX init script.
@@ -989,7 +1004,7 @@ PVRSRV_ERROR RGXPostClockSpeedChange (IMG_HANDLE				hDevHandle,
 		RGXFWIF_KCCB_CMD	sCOREClkSpeedChangeCmd;
 
 		/* Update the timer correlation data */
-    	_RGXMakeTimeCorrData(psDeviceNode, &psDevInfo->psRGXFWIfGpuUtilFWCb->sTimeCorr);
+		_RGXMakeTimeCorrData(psDeviceNode);
 
     	sCOREClkSpeedChangeCmd.eCmdType = RGXFWIF_KCCB_CMD_CORECLKSPEEDCHANGE;
 		sCOREClkSpeedChangeCmd.uCmdData.sCORECLKSPEEDCHANGEData.ui32NewClockSpeed = ui32NewClockSpeed;

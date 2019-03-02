@@ -169,4 +169,6 @@ IMG_VOID SetFirmwareStartTime(IMG_UINT32 ui32TimeStamp);
 
 IMG_VOID SetFirmwareHandshakeIdleTime(IMG_UINT64 ui64Duration);
 
+IMG_UINT32 MTKGetMemStat(IMG_VOID);
+
 #endif /* __PROCESS_STATS_H__ */

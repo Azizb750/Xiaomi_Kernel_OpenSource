@@ -887,6 +887,7 @@ _MoveProcessToDeadListDebugFS(PVRSRV_PROCESS_STATS* psProcessStats)
 	_CreateOSStatisticEntries(psProcessStats, pvOSDeadPidFolder);
 } /* _MoveProcessToDeadListDebugFS */
 
+extern unsigned int (*mtk_get_gpu_memory_usage_fp)(void);
 /*************************************************************************/ /*!
 @Function       PVRSRVStatsInitialise
 @Description    Entry point for initialising the statistics module.
@@ -925,6 +926,7 @@ PVRSRVStatsInitialise(IMG_VOID)
 	/* Flag that we are ready to start monitoring memory allocations. */
 	bProcessStatsInitialised = IMG_TRUE;
 	
+	mtk_get_gpu_memory_usage_fp = MTKGetMemStat;
 	
 	return error;
 } /* PVRSRVStatsInitialise */
@@ -1852,8 +1854,8 @@ PVRSRVStatsIncrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 	_increase_global_stat(eAllocType, uiBytes);
 
     OSLockAcquire(psLinkedListLock);
+
     psProcessStats = _FindProcessStats(currentPid);
-    OSLockRelease(psLinkedListLock);
     if (psProcessStats != IMG_NULL)
     {
 		/* Update the memory watermarks... */
@@ -1938,6 +1940,8 @@ PVRSRVStatsIncrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 			break;
 		}
     }
+
+    OSLockRelease(psLinkedListLock);
 }
 
 IMG_VOID
@@ -1971,9 +1975,9 @@ PVRSRVStatsDecrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 
 	_decrease_global_stat(eAllocType, uiBytes);
 
-    OSLockAcquire(psLinkedListLock);
+	OSLockAcquire(psLinkedListLock);
+
     psProcessStats = _FindProcessStats(currentPid);
-    OSLockRelease(psLinkedListLock);
     if (psProcessStats != IMG_NULL)
     {
 		/* Update the memory watermarks... */
@@ -2104,6 +2108,8 @@ PVRSRVStatsDecrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 			break;
 		}
 	}
+
+	OSLockRelease(psLinkedListLock);
 }
 
 
@@ -2800,4 +2806,12 @@ _PVRSRVGetGlobalMemStat(IMG_PVOID pvStatPtr,
 }
 
 
+
+IMG_UINT32 MTKGetMemStat(IMG_VOID)
+{
+	return (IMG_UINT32) (gsGlobalStats.ui32MemoryUsageKMalloc +
+	gsGlobalStats.ui32MemoryUsageVMalloc + 
+	gsGlobalStats.ui32MemoryUsageAllocPTMemoryUMA +
+	gsGlobalStats.ui32MemoryUsageAllocGPUMemUMA);
+}
 

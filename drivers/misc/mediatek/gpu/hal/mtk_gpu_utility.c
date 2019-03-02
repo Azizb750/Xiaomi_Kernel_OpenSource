@@ -265,3 +265,38 @@ bool mtk_get_custom_upbound_gpu_freq(unsigned int *pui32FreqLevel)
 EXPORT_SYMBOL(mtk_get_custom_upbound_gpu_freq);
 
 
+//-----------------------------------------------------------------------------
+
+void  (*mtk_gpu_sodi_entry_fp)(void) = NULL;
+EXPORT_SYMBOL(mtk_gpu_sodi_entry_fp);
+
+bool mtk_gpu_sodi_entry(void)
+{
+    if (NULL != mtk_gpu_sodi_entry_fp)
+    {
+        mtk_gpu_sodi_entry_fp();
+        return true;
+    }
+    return false;
+}
+EXPORT_SYMBOL(mtk_gpu_sodi_entry);
+
+
+
+//-----------------------------------------------------------------------------
+
+void  (*mtk_gpu_sodi_exit_fp)(void) = NULL;
+EXPORT_SYMBOL(mtk_gpu_sodi_exit_fp);
+
+bool mtk_gpu_sodi_exit(void)
+{
+    if (NULL != mtk_gpu_sodi_exit_fp)
+    {
+        mtk_gpu_sodi_exit_fp();
+        return true;
+    }
+    return false;
+}
+EXPORT_SYMBOL(mtk_gpu_sodi_exit);
+
+

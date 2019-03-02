@@ -88,7 +88,7 @@ typedef struct PVRSRV_DATA_TAG
 
 	IMG_HANDLE					hGlobalEventObject;			/*!< OS Global Event Object */
 	IMG_UINT32					ui32GEOConsecutiveTimeouts;	/*!< OS Global Event Object Timeouts */
-
+	
 	PVRSRV_CACHE_OP				uiCacheOp;					/*!< Pending cache operations in the system */
 	PRESMAN_DEFER_CONTEXTS_LIST	hResManDeferContext;		/*!< Device driver global deferred resman contexts list */
 
@@ -224,7 +224,7 @@ PVRSRV_ERROR LMA_MMUPxMap(PVRSRV_DEVICE_NODE *psDevNode, Px_HANDLE *psMemHandle,
 
 IMG_VOID LMA_MMUPxUnmap(PVRSRV_DEVICE_NODE *psDevNode, Px_HANDLE *psMemHandle,
 						IMG_VOID *pvPtr);
-
+										
 
 /*!
 ******************************************************************************
@@ -335,10 +335,10 @@ IMG_VOID PVRSRVSystemWaitCycles(PVRSRV_DEVICE_CONFIG *psDevConfig, IMG_UINT32 ui
  @Function	: PVRSRVCheckStatus
 
  @Description	: Notify any registered cmd complete function (except if its
-				  hPrivData matches the hCmdCompHandle handler) and raise the global
-				  event object.
+				  hPrivData matches the hCmdCompHandle handler) and raise the global 
+				  event object. 
 
- @Input hCmdCompHandle	: Identify the caller by the handler used when
+ @Input hCmdCompHandle	: Identify the caller by the handler used when 
 						  registering for cmd complete. IMG_NULL calls all
 						  the notify functions.
 
@@ -393,7 +393,7 @@ PVRSRV_ERROR PVRSRVUnregisterCmdCompleteNotify(IMG_HANDLE hNotify);
  @Function	: PVRSRVDebugRequest
 
  @Description	: Notify any registered debug request handler that a debug
-                  request has been made and at what level. It dumps information
+                  request has been made and at what level. It dumps information 
 		  for all debug handlers unlike RGXDumpDebugInfo
 
  @Input ui32VerbLevel	: The maximum verbosity level to dump
@@ -421,7 +421,7 @@ IMG_VOID IMG_CALLCONV PVRSRVDebugRequest(IMG_UINT32 ui32VerbLevel, DUMPDEBUG_PRI
  @Input pfnDbgRequestNotify : Notify function
 
  @Input ui32RequesterID : Used to determine the order debug request callbacks get
-                          called in with the table passed into
+                          called in with the table passed into 
 
  @Input hDbgReqeustHandle : Handler to data passed to the Notify function when called
 

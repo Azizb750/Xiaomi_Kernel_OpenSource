@@ -67,6 +67,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <linux/dma-buf.h>
 #include <linux/scatterlist.h>
 
+#include <linux/platform_device.h>
+extern struct platform_device *gpsPVRLDMDev;
+
 typedef struct _PMR_DMA_BUF_DATA_
 {
 	struct dma_buf_attachment *psAttachment;
@@ -486,7 +489,7 @@ PhysmemImportDmaBuf(CONNECTION_DATA *psConnection,
 	}
 
 	/* Attach a fake device to to the dmabuf */
-	psPrivData->psAttachment = dma_buf_attach(psPrivData->psDmaBuf, (void *)0x1);
+	psPrivData->psAttachment = dma_buf_attach(psPrivData->psDmaBuf, (void *)&gpsPVRLDMDev->dev);
 
 	if (IS_ERR_OR_NULL(psPrivData->psAttachment))
 	{

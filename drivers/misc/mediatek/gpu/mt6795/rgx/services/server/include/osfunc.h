@@ -226,16 +226,16 @@ static INLINE IMG_CHAR *OSStringCopy(IMG_CHAR *pszDest, const IMG_CHAR *pszSrc)
 ******************************************************************************
 
  @Function OSWaitus
-
- @Description
+ 
+ @Description 
     This function implements a busy wait of the specified microseconds
     This function does NOT release thread quanta
-
+ 
  @Input ui32Timeus - (us)
 
  @Return IMG_VOID
 
-******************************************************************************/
+******************************************************************************/ 
 IMG_VOID OSWaitus(IMG_UINT32 ui32Timeus);
 
 
@@ -243,16 +243,16 @@ IMG_VOID OSWaitus(IMG_UINT32 ui32Timeus);
 ******************************************************************************
 
  @Function OSSleepms
-
- @Description
+ 
+ @Description 
     This function implements a sleep of the specified milliseconds
     This function may allow pre-emption if implemented
-
+ 
  @Input ui32Timems - (ms)
 
  @Return IMG_VOID
 
-******************************************************************************/
+******************************************************************************/ 
 IMG_VOID OSSleepms(IMG_UINT32 ui32Timems);
 
 IMG_VOID OSReleaseThreadQuanta(IMG_VOID);
@@ -302,7 +302,7 @@ IMG_BOOL OSAccessOK(IMG_VERIFY_TEST eVerification, IMG_VOID *pvUserPtr, IMG_SIZE
 PVRSRV_ERROR OSCopyToUser(IMG_PVOID pvProcess, IMG_VOID *pvDest, const IMG_VOID *pvSrc, IMG_SIZE_T ui32Bytes);
 PVRSRV_ERROR OSCopyFromUser(IMG_PVOID pvProcess, IMG_VOID *pvDest, const IMG_VOID *pvSrc, IMG_SIZE_T ui32Bytes);
 
-
+							
 IMG_VOID OSWriteMemoryBarrier(IMG_VOID);
 IMG_VOID OSMemoryBarrier(IMG_VOID);
 

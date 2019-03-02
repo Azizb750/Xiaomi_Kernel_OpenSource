@@ -65,9 +65,6 @@ static IMG_UINT32 gpu_block = 0;
 static IMG_UINT32 gpu_idle = 0;
 static IMG_UINT32 gpu_freq = 0;
 
-static IMG_BOOL g_bUnsync =IMG_FALSE;
-static IMG_UINT32 g_ui32_unsync_freq_id = 0;
-
 #ifdef CONFIG_MTK_SEGMENT_TEST
 static IMG_UINT32 efuse_mfg_enable =0;
 #endif
@@ -160,31 +157,8 @@ static IMG_VOID MTKEnableMfgClock(void)
     }
 }
 
-#define MFG_BUS_IDLE_BIT ( 1 << 16 )
-
 static IMG_VOID MTKDisableMfgClock(void)
 {
-    
-    volatile int polling_count = 200000;
-    volatile int i = 0;
-    
-    do {
-        /// 0x13FFF000[16]
-        /// 1'b1: bus idle
-        /// 1'b0: bus busy  
-        if (  DRV_Reg32(g_pvRegsKM) & MFG_BUS_IDLE_BIT )
-        {
-	    i = 1;
-            break;
-        }
-        
-    } while (polling_count--);
-
-#ifdef MTK_DEBUG    
-    if(i==0)
-        PVR_DPF((PVR_DBG_WARNING, "MTKDisableMfgClock: wait IDLE TIMEOUT"));
-#endif
-    
 	disable_clock(MT_CG_MFG_26M, "MFG");
 	disable_clock(MT_CG_MFG_G3D, "MFG");
 	disable_clock(MT_CG_MFG_MEM, "MFG");
@@ -296,7 +270,6 @@ static IMG_BOOL MTKDoGpuDVFS(IMG_UINT32 ui32NewFreqID, IMG_BOOL bIdleDevice)
     }
 
     eResult = PVRSRVDevicePreClockSpeedChange(ui32RGXDevIdx, bIdleDevice, (IMG_VOID*)NULL);
-
     if ((PVRSRV_OK == eResult) || (PVRSRV_ERROR_RETRY == eResult))
     {
         unsigned int ui32GPUFreq;
@@ -304,17 +277,12 @@ static IMG_BOOL MTKDoGpuDVFS(IMG_UINT32 ui32NewFreqID, IMG_BOOL bIdleDevice)
         PVRSRV_DEV_POWER_STATE ePowerState;
 
         PVRSRVGetDevicePowerState(ui32RGXDevIdx, &ePowerState);
-        if (ePowerState == PVRSRV_DEV_POWER_STATE_ON)
+        if (ePowerState != PVRSRV_DEV_POWER_STATE_ON)
         {
-            mt_gpufreq_target(ui32NewFreqID);
-            g_bUnsync = IMG_FALSE;
-        }
-        else
-        {
-            g_ui32_unsync_freq_id = ui32NewFreqID;
-            g_bUnsync = IMG_TRUE;
+            MTKEnableMfgClock();
         }
 
+        mt_gpufreq_target(ui32NewFreqID);
         ui32CurFreqID = mt_gpufreq_get_cur_freq_index();
         ui32GPUFreq = mt_gpufreq_get_frequency_by_level(ui32CurFreqID);
         gpu_freq = ui32GPUFreq;
@@ -329,6 +297,11 @@ static IMG_BOOL MTKDoGpuDVFS(IMG_UINT32 ui32NewFreqID, IMG_BOOL bIdleDevice)
 #ifdef MTK_DEBUG
         printk(KERN_ERR "PVR_K: 3DFreq=%d, Volt=%d\n", ui32GPUFreq, mt_gpufreq_get_cur_volt());
 #endif
+
+        if (ePowerState != PVRSRV_DEV_POWER_STATE_ON)
+        {
+            MTKDisableMfgClock();
+        }
 
         if (PVRSRV_OK == eResult)
         {
@@ -541,9 +514,8 @@ static IMG_BOOL MTKGpuDVFSPolicy(IMG_UINT32 ui32GPULoading, unsigned int* pui32N
     int i32MaxLevel = (int)(mt_gpufreq_get_dvfs_table_num() - 1);
     int i32CurFreqID = (int)mt_gpufreq_get_cur_freq_index();
     int i32NewFreqID = i32CurFreqID;
-//charge by zhoulingyun for cx861 powersave (wufangqi 20150906) start
-   #if 0
-   if (ui32GPULoading >= 99)
+
+    if (ui32GPULoading >= 99)
     {
         i32NewFreqID = 0;
     }
@@ -567,33 +539,7 @@ static IMG_BOOL MTKGpuDVFSPolicy(IMG_UINT32 ui32GPULoading, unsigned int* pui32N
     {
         i32NewFreqID += 1;
     }
-   #else
-    if (ui32GPULoading >= 99)
-    {
-        i32NewFreqID = 0;
-    }
-    else if (ui32GPULoading <= 1)
-    {
-        i32NewFreqID = i32MaxLevel;
-    }
-    else if (ui32GPULoading >= 95)
-    {
-        i32NewFreqID -= 2;
-    }
-    else if (ui32GPULoading <= 40)
-    {
-        i32NewFreqID += 2;
-    }
-    else if (ui32GPULoading >= 80)
-    {
-        i32NewFreqID -= 1;
-    }
-    else if (ui32GPULoading <= 60)
-    {
-        i32NewFreqID += 1;
-    }
-    #endif 
-//charge by zhoulingyun for cx861 powersave (wufangqi 20150906) end
+
     if (i32NewFreqID < i32CurFreqID)
     {
         if (gpu_pre_loading * 17 / 10 < ui32GPULoading)
@@ -791,11 +737,6 @@ PVRSRV_ERROR MTKDevPostPowerState(PVRSRV_DEV_POWER_STATE eNewPowerState,
             }
         }
 #endif
-		if(IMG_TRUE == g_bUnsync)
-		{
-			mt_gpufreq_target(g_ui32_unsync_freq_id);
-			g_bUnsync = IMG_FALSE;
-		}
     }
 
     return PVRSRV_OK;
@@ -805,7 +746,6 @@ PVRSRV_ERROR MTKSystemPrePowerState(PVRSRV_SYS_POWER_STATE eNewPowerState)
 {
 	if(PVRSRV_SYS_POWER_STATE_OFF == eNewPowerState)
     {
-        ;
     }
 
 	return PVRSRV_OK;

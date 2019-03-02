@@ -496,4 +496,13 @@ void MTKPP_TriggerAEE(void)
 #endif
 }
 
+
+#include "pvr_debug.h"
+#include "pvrsrv.h"
+
+void MTKPP_dump_fw_log(void )
+{
+	PVRSRVDebugRequest(DEBUG_REQUEST_VERBOSITY_MAX,NULL);
+}
+
 #endif

@@ -1131,11 +1131,6 @@ FWRTACpuMapError:
 	RGXUnsetFirmwareAddress(*ppsRTACtlMemDesc);
 	DevmemFwFree(*ppsRTACtlMemDesc);
 FWRTAAllocateError:
-	DevmemReleaseCpuVirtAddr(*ppsMemDesc);
-FWRTDataCpuMapError:
-	RGXUnsetFirmwareAddress(*ppsMemDesc);
-	DevmemFwFree(*ppsMemDesc);
-FWRTDataAllocateError:
 	OSLockAcquire(psDevInfo->hLockFreeList);
 	for (ui32Loop = 0; ui32Loop < RGXFW_MAX_FREELISTS; ui32Loop++)
 	{
@@ -1143,6 +1138,11 @@ FWRTDataAllocateError:
 		psTmpCleanup->apsFreeLists[ui32Loop]->ui32RefCount--;
 	}
 	OSLockRelease(psDevInfo->hLockFreeList);
+	DevmemReleaseCpuVirtAddr(*ppsMemDesc);
+FWRTDataCpuMapError:
+	RGXUnsetFirmwareAddress(*ppsMemDesc);
+	DevmemFwFree(*ppsMemDesc);
+FWRTDataAllocateError:
 	SyncPrimFree(psTmpCleanup->psCleanupSync);
 SyncAlloc:
 	OSFreeMem(psTmpCleanup);

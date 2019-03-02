@@ -291,11 +291,25 @@ typedef struct _RGXFWIF_TRACEBUF_
 		(cb)->ui32LastGpuUtilState = (state);																			\
 	} while (0)
 
+
+/* The timer correlation array must be big enough to ensure old entries won't be
+ * overwritten before all the HWPerf events linked to those entries are processed
+ * by the MISR. The update frequency of this array depends on how fast the system
+ * can change state (basically how small the APM latency is) and perform DVFS transitions.
+ *
+ * The minimum size is 2 (not 1) to avoid race conditions between the FW reading
+ * an entry while the Host is updating it. With 2 entries in the worst case the FW
+ * will read old data, which is still quite ok if the Host is updating the timer
+ * correlation at that time.
+ */
+#define RGXFWIF_TIME_CORR_ARRAY_SIZE	256
+
 typedef IMG_UINT64 RGXFWIF_GPU_UTIL_FWCB_ENTRY;
 
 typedef struct _RGXFWIF_GPU_UTIL_FWCB_
 {
-	RGXFWIF_TIME_CORR	sTimeCorr;
+	RGXFWIF_TIME_CORR	sTimeCorr[RGXFWIF_TIME_CORR_ARRAY_SIZE];
+	IMG_UINT32			ui32TimeCorrCurrent;
 	IMG_UINT32			ui32WriteOffset;
 	IMG_UINT32			ui32LastGpuUtilState;
 	IMG_UINT32			ui32CurrentDVFSId;

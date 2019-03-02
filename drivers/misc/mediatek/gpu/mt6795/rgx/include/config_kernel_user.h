@@ -13,7 +13,6 @@
 #define RELEASE 
 #define RGX_BVNC_CORE_KM_HEADER "cores/rgxcore_km_1.75.2.20.h" 
 #define RGX_BNC_CONFIG_KM_HEADER "configs/rgxconfig_km_1.V.2.20.h" 
-#define FORCE_UNCACHED_ALIGN 
 #define SUPPORT_DBGDRV_EVENT_OBJECTS 
 #define SYS_USING_INTERRUPTS 
 #define PVRSRV_NEED_PVR_DPF 
