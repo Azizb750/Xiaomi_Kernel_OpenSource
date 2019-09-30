@@ -142,6 +142,12 @@ config CPU_FREQ_DEFAULT_GOV_BALANCE
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
 
+config CPU_FREQ_DEFAULT_GOV_THUNDERX
+  bool "thunderx"
+  select CPU_FREQ_GOV_THUNDERX
+  help
+  Uses ThunderX as Your Default Governor
+
 config CPU_FREQ_DEFAULT_GOV_HOTPLUG
 	bool "hotplug"
 	select CPU_FREQ_GOV_HOTPLUG
@@ -211,6 +217,12 @@ config CPU_FREQ_GOV_POWERSAVE
 	  module will be called cpufreq_powersave.
 
 	  If in doubt, say Y.
+
+config CPU_FREQ_GOV_THUNDERX
+  tristate "'thunderx' cpufreq governor"
+  depends on CPU_FREQ
+  help
+'thunderx' - a "power optimized" governor for Mediatek SoCs
 
 config CPU_FREQ_GOV_USERSPACE
 	tristate "'userspace' governor for userspace frequency scaling"
