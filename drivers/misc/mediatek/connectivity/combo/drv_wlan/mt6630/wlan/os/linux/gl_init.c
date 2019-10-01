@@ -2200,9 +2200,9 @@ static struct wireless_dev *wlanNetCreate(PVOID pvData)
 	prGlueInfo->prDevHandler = alloc_netdev_mq(sizeof(NETDEV_PRIVATE_GLUE_INFO), NIC_INF_NAME,
 						ether_setup, CFG_MAX_TXQ_NUM);
 #endif
-	DBGLOG(INIT, INFO, "net_device prDev(0x%p) allocated\n", prGlueInfo->prDevHandler);
+	DBGLOG(INIT, INFO, ("net_device prDev(0x%p) allocated\n", prGlueInfo->prDevHandler));
 	if (!prGlueInfo->prDevHandler) {
-		DBGLOG(INIT, ERROR, "Allocating memory to net_device context failed\n");
+		DBGLOG(INIT, ERROR, ("Allocating memory to net_device context failed\n"));
 		goto netcreate_err;
 	}
 	/* 4 <3.1.1> initialize net device varaiables */
